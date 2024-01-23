@@ -29,6 +29,7 @@ export interface State {
   page: number;
   searchTerm: string;
   filteredPosts: Post[];
+  lastpage: boolean;
 }
 
 class HomeScreen extends Component<any, State> {
@@ -39,6 +40,7 @@ class HomeScreen extends Component<any, State> {
       page: 0,
       searchTerm: '',
       filteredPosts: [],
+      lastpage: false,
     };
   }
 
@@ -59,6 +61,11 @@ class HomeScreen extends Component<any, State> {
     try {
       const {page} = this.state;
       const response = await axios.get(`${this.apiEndpoint}&page=${page}`);
+      if (response.data.hits.length == 0) {
+        clearInterval(this.intervalId);
+        this.setState({lastpage: true});
+        return;
+      }
       const newPosts: Post[] = response.data.hits.map((hit: any) => ({
         title: hit.title,
         author: hit.author,
@@ -67,9 +74,9 @@ class HomeScreen extends Component<any, State> {
         _tags: hit._tags,
         id: hit.story_id,
       }));
-
+      const uniquePostIds = new Set(this.state.posts.map(post => post.id));
       const uniqueNewPosts = newPosts.filter(
-        newPost => !this.state.posts.some(post => post.id === newPost.id),
+        newPost => !uniquePostIds.has(newPost.id),
       );
 
       if (uniqueNewPosts.length > 0) {
@@ -149,7 +156,9 @@ class HomeScreen extends Component<any, State> {
           onEndReached={this.handleLoadMore}
           onEndReachedThreshold={0.3}
           ListFooterComponent={
-            <ActivityIndicator size="large" color="#0000ff" />
+            this.state.lastpage ? null : (
+              <ActivityIndicator size="large" color="#0000ff" />
+            )
           }
         />
       </View>

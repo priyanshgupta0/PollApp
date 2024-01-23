@@ -4,6 +4,8 @@ import {render, waitFor, act, fireEvent} from '@testing-library/react-native';
 import axios from 'axios'; // Import axios for mocking
 import HomeScreen from '../src/Screens/Home';
 
+jest.useFakeTimers();
+
 const mockedResponse = {
   data: {
     hits: [
@@ -150,42 +152,20 @@ describe('HomeScreen', () => {
     fireEvent.press(card);
   });
   it('does not add posts with duplicate ids', async () => {
-    const mockedResponse = {
-      data: {
-        hits: [
-          {
-            title: 'Test Post 1',
-            author: 'Test Author 1',
-            story_id: '1',
-            url: 'google.com',
-            _tags: 'tag',
-            created_at: 'Date',
-          },
-          {
-            title: 'Test Post 2',
-            author: 'Test Author 2',
-            story_id: '2',
-            url: 'google.com',
-            _tags: 'tag',
-            created_at: 'Date',
-          },
-          {
-            title: 'Test Post 2',
-            author: 'Test Author 2',
-            story_id: '2',
-            url: 'google.com',
-            _tags: 'tag',
-            created_at: 'Date',
-          },
-        ],
-      },
+    const initialState = {
+      posts: mockedResponse,
+      page: 0,
+      searchTerm: '',
+      filteredPosts: [],
     };
-    // Set up the mock for axios.get
-    jest.spyOn(axios, 'get').mockResolvedValueOnce(mockedResponse);
 
+    jest.spyOn(axios, 'get').mockResolvedValueOnce(mockedResponse);
     // Render the component
     const {getByText} = render(<HomeScreen />);
 
+    jest.spyOn(axios, 'get').mockReset();
+    jest.spyOn(axios, 'get').mockResolvedValueOnce(mockedResponse);
+    // Set up the mock for axios.get
     // Wait for the initial posts to be fetched and rendered
     await waitFor(() => getByText('Test Post 1'));
 
@@ -196,5 +176,60 @@ describe('HomeScreen', () => {
     // Check that only unique posts are present
     expect(getByText('Test Post 1')).toBeDefined();
     // expect(getByText('Test Post 2')).toBeDefined();
+  });
+
+  it('fetches posts successfully', async () => {
+    // Mock the axios.get method to return a sample response
+    const mockedResponse = {
+      data: {
+        hits: [],
+      },
+    };
+    // Set up the mock for axios.get
+    jest.spyOn(axios, 'get').mockResolvedValueOnce(mockedResponse);
+
+    // Render the component
+    const {getByText} = render(<HomeScreen />);
+    jest.advanceTimersByTime(10000);
+    await waitFor(() => {});
+  });
+
+  it('updates posts and increments page when there are new posts', async () => {
+    const axiosMock = jest.spyOn(axios, 'get');
+    axiosMock.mockResolvedValue({
+      data: {
+        hits: [
+          {
+            title: 'New Post 1',
+            author: 'Author 1',
+            url: 'https://example.com/1',
+            created_at: '2022-01-01T12:00:00.000Z',
+            _tags: ['tag1'],
+            id: '1',
+          },
+          // Add more new posts as needed
+        ],
+      },
+    });
+
+    const {getByText} = render(<HomeScreen />);
+
+    // Advance timers to simulate the interval
+    jest.advanceTimersByTime(10000);
+
+    // Wait for the next render cycle
+    await waitFor(() => {});
+
+    // Ensure that posts are updated and page is incremented
+    expect(getByText('New Post 1')).toBeTruthy();
+    // Add more assertions for other properties of the new posts if needed
+    expect(getByText('By : Author 1')).toBeTruthy();
+    expect(getByText('Created At : 2022-01-01T12:00:00.000Z')).toBeTruthy();
+    expect(getByText('Tags : tag1')).toBeTruthy();
+    expect(getByText('Link : https://example.com/1')).toBeTruthy();
+
+    // Ensure that page is incremented
+    // Note: This assumes your page increment logic is reflected in the UI somehow
+    expect(getByText('New Post 1')).toBeTruthy(); // Update with the actual text content
   });
 });

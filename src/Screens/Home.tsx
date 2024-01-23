@@ -110,13 +110,16 @@ class HomeScreen extends Component<any, State> {
 
   renderItem = ({item}: {item: Post}) => (
     <TouchableOpacity
+      style={styles.card}
       onPress={() =>
         this.props.navigation.navigate('PostDetail', {post: item})
       }>
       <View>
-        <Text>{item.title}</Text>
-        <Text>{item.author}</Text>
-        <Text>{item.created_at}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.auther}>By : {item.author}</Text>
+        <Text style={styles.text}>Created At : {item.created_at}</Text>
+        <Text style={styles.text}>Tags : {item._tags}</Text>
+        <Text style={styles.text}>Link : {item.url}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -126,8 +129,9 @@ class HomeScreen extends Component<any, State> {
     const dataToRender = searchTerm ? filteredPosts : this.state.posts;
 
     return (
-      <View>
+      <View style={styles.container}>
         <TextInput
+          style={styles.input}
           placeholder="Search by title or author"
           value={searchTerm}
           onChangeText={text => this.setState({searchTerm: text})}
@@ -146,3 +150,39 @@ class HomeScreen extends Component<any, State> {
 }
 
 export default HomeScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'white',
+    flex: 1,
+  },
+  input: {
+    height: 40,
+    borderColor: 'black',
+    borderWidth: mobileW * 0.005,
+    borderRadius: 3,
+    marginBottom: 16,
+    padding: mobileW * 0.01,
+    margin: mobileW * 0.02,
+  },
+  card: {
+    borderWidth: mobileW * 0.005,
+    margin: mobileW * 0.005,
+    padding: mobileW * 0.01,
+  },
+  title: {
+    fontSize: mobileW * 0.05,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  auther: {
+    fontSize: mobileW * 0.04,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  text: {
+    fontSize: mobileW * 0.035,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+});

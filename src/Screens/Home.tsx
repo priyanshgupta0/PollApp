@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 
@@ -77,12 +79,14 @@ class HomeScreen extends Component<any, State> {
         }));
       }
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      Alert.alert('Error fetching posts:', 'Network Error');
     }
   };
 
   handleLoadMore = () => {
     this.fetchPosts();
+    clearInterval(this.intervalId);
+    this.intervalId = setInterval(this.fetchPosts, 10000);
   };
 
   handleSearch = () => {
@@ -138,11 +142,15 @@ class HomeScreen extends Component<any, State> {
           onSubmitEditing={this.handleSearch}
         />
         <FlatList
+          testID="FlatList"
           data={dataToRender}
           renderItem={this.renderItem}
           keyExtractor={item => item.id}
           onEndReached={this.handleLoadMore}
-          onEndReachedThreshold={0.1}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={
+            <ActivityIndicator size="large" color="#0000ff" />
+          }
         />
       </View>
     );
